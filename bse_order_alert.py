@@ -27,7 +27,7 @@ ALERT_TO = os.getenv("ALERT_TO")
 # BSE API Configuration
 BSE_API_URL = "https://api.bseindia.com/BseIndiaAPI/api/AnnSubCategoryGetData/w"
 BSE_BASE_URL = "https://www.bseindia.com"
-REQUEST_TIMEOUT = 30  # seconds
+REQUEST_TIMEOUT = 90  # seconds
 
 # Keywords to match in announcement headlines/subcategories
 ORDER_KEYWORDS = [
