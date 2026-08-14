@@ -172,184 +172,85 @@ def first_value(ann, *keys):
 
 def fetch_today_announcements():
     """
-    Fetch today's corporate announcements from BSE API.
+    Fetch the latest BSE corporate announcements.
+
+    We intentionally fetch only the first page because the
+    BSE feed is sorted with the latest announcements first.
+    The workflow runs every 5 minutes, so downloading every
+    announcement from the entire day is unnecessary and can
+    exceed GitHub Actions' execution limit.
     """
 
     today = datetime.now()
-
     date_str = today.strftime("%Y%m%d")
 
-
     headers = {
-
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/134.0.0.0 Safari/537.3"
         ),
-
-        "Accept": (
-            "application/json, text/plain, */*"
-        ),
-
+        "Accept": "application/json, text/plain, */*",
         "Accept-Language": "en-US,en;q=0.5",
-
         "Origin": BSE_BASE_URL,
-
         "Referer": BSE_BASE_URL + "/",
-
         "Connection": "keep-alive",
     }
 
-
     params = {
-
         "pageno": 1,
-
         "strCat": "-1",
-
         "subcategory": "-1",
-
         "strPrevDate": date_str,
-
         "strToDate": date_str,
-
         "strSearch": "P",
-
         "strScrip": "",
-
         "strType": "C",
     }
 
-
-    all_announcements = []
-
-    page_no = 1
-
-
     try:
+        print("Fetching latest BSE announcements...")
 
-        while True:
-
-            params["pageno"] = page_no
-
-            print(
-                f"Fetching BSE page {page_no}..."
-            )
-
-
-            response = requests.get(
-
-                BSE_API_URL,
-
-                params=params,
-
-                headers=headers,
-
-                timeout=REQUEST_TIMEOUT,
-            )
-
-
-            response.raise_for_status()
-
-
-            data = response.json()
-
-
-            table = data.get(
-                "Table",
-                []
-            )
-
-
-            if not table:
-
-                break
-
-
-            all_announcements.extend(table)
-
-
-            # Check total number of records
-            table1 = data.get(
-                "Table1",
-                []
-            )
-
-
-            if (
-                table1
-                and "ROWCNT" in table1[0]
-            ):
-
-                try:
-
-                    total_rows = int(
-                        table1[0]["ROWCNT"]
-                    )
-
-
-                    if (
-                        len(all_announcements)
-                        >= total_rows
-                    ):
-
-                        break
-
-                except (
-                    TypeError,
-                    ValueError
-                ):
-
-                    pass
-
-
-            # If there is no total count,
-            # less than 50 normally means last page.
-            if len(table) < 50:
-
-                break
-
-
-            page_no += 1
-
-
-            # Safety limit
-            if page_no > 100:
-
-                print(
-                    "Warning: Reached max page limit (100)"
-                )
-
-                break
-
-
-    except requests.exceptions.Timeout:
-
-        raise RuntimeError(
-            f"BSE API request timed out after "
-            f"{REQUEST_TIMEOUT}s"
+        response = requests.get(
+            BSE_API_URL,
+            params=params,
+            headers=headers,
+            timeout=REQUEST_TIMEOUT
         )
 
+        response.raise_for_status()
+
+        data = response.json()
+
+        table = data.get("Table", [])
+
+        if not table:
+            raise RuntimeError(
+                "BSE API returned no announcements."
+            )
+
+        print(
+            f"BSE returned {len(table)} announcements "
+            "from the latest page."
+        )
+
+        return table
+
+    except requests.exceptions.Timeout:
+        raise RuntimeError(
+            f"BSE API request timed out after "
+            f"{REQUEST_TIMEOUT} seconds."
+        )
 
     except requests.exceptions.RequestException as e:
-
         raise RuntimeError(
             f"BSE API request failed: {e}"
         )
 
-
-    except (
-        ValueError,
-        json.JSONDecodeError
-    ) as e:
-
+    except json.JSONDecodeError as e:
         raise RuntimeError(
-            f"Invalid JSON response from BSE API: {e}"
+            f"BSE API returned invalid JSON: {e}"
         )
-
-
-    return all_announcements
 
 
 # ============================================================
