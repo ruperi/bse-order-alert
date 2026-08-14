@@ -1,0 +1,49 @@
+name: BSE Order Announcement Alert
+
+on:
+  schedule:
+    # Runs every 5 minutes (tightest free GitHub Actions scheduler supports)
+    # For market hours only (roughly 8:30am-5:30pm IST, Mon-Fri), use:
+    # - cron: '*/5 3-12 * * 1-5'
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  check-bse-orders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run BSE Order Alert script
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_TO: ${{ secrets.ALERT_TO }}
+        run: |
+          python bse_order_alert.py
+
+      - name: Commit updated seen_announcements.json
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add seen_announcements.json
+          git diff --staged --quiet || git commit -m "chore: update seen announcements [$(date -u +'%Y-%m-%d %H:%M:%S UTC')]"
+          git push
