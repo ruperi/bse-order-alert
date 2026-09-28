@@ -173,39 +173,33 @@ def first_value(ann, *keys):
 def fetch_today_announcements():
     """
     Fetch the latest BSE corporate announcements.
-
-    We intentionally fetch only the first page because the
-    BSE feed is sorted with the latest announcements first.
-    The workflow runs every 5 minutes, so downloading every
-    announcement from the entire day is unnecessary and can
-    exceed GitHub Actions' execution limit.
     """
 
     today = datetime.now()
     date_str = today.strftime("%Y%m%d")
 
     headers = {
-    "Host": "api.bseindia.com",
-    "Referer": "https://www.bseindia.com/corporates/ann.html",
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/134.0.6998.166 Safari/537.36"
-    ),
-    "Sec-CH-UA": (
-        '"Google Chrome";v="134", '
-        '"Chromium";v="134", '
-        '"Not?A_Brand";v="99"'
-    ),
-    "Sec-CH-UA-Mobile": "?0",
-    "Sec-CH-UA-Platform": '"Windows"',
-    "DNT": "1",
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Cache-Control": "no-cache",
-    "Connection": "keep-alive",
-}
+        "Host": "api.bseindia.com",
+        "Referer": "https://www.bseindia.com/corporates/ann.html",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/134.0.0.0 Safari/537.36"
+        ),
+        "Sec-CH-UA": (
+            '"Google Chrome";v="134", '
+            '"Chromium";v="134", '
+            '"Not?A_Brand";v="99"'
+        ),
+        "Sec-CH-UA-Mobile": "?0",
+        "Sec-CH-UA-Platform": '"Windows"',
+        "DNT": "1",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+    }
 
     params = {
         "pageno": 1,
@@ -222,13 +216,13 @@ def fetch_today_announcements():
         print("Fetching latest BSE announcements...")
 
         session = requests.Session()
-session.headers.update(headers)
+        session.headers.update(headers)
 
-response = session.get(
-    BSE_API_URL,
-    params=params,
-    timeout=REQUEST_TIMEOUT
-)
+        response = session.get(
+            BSE_API_URL,
+            params=params,
+            timeout=REQUEST_TIMEOUT
+        )
 
         response.raise_for_status()
 
