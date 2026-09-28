@@ -221,12 +221,14 @@ def fetch_today_announcements():
     try:
         print("Fetching latest BSE announcements...")
 
-        response = requests.get(
-            BSE_API_URL,
-            params=params,
-            headers=headers,
-            timeout=REQUEST_TIMEOUT
-        )
+        session = requests.Session()
+session.headers.update(headers)
+
+response = session.get(
+    BSE_API_URL,
+    params=params,
+    timeout=REQUEST_TIMEOUT
+)
 
         response.raise_for_status()
 
